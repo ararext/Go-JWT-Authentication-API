@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ararext/Go-JWT-Authentication-API/internal/config"
+	"github.com/ararext/Go-JWT-Authentication-API/internal/database"
 	"github.com/ararext/Go-JWT-Authentication-API/internal/logger"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -20,7 +21,13 @@ func main() {
 		zap.String("database", cfg.DatabaseName),
 	)
 
-	router := gin.Default();
+	db, err := database.Connect(cfg.MongoURI, cfg.DatabaseName, log)
+	if err != nil {
+		log.Fatal("failed to connect to database", zap.Error(err))
+	}
+	_ = db // used properly starting Day 6 once repository/service are wired through routes
+
+	router := gin.Default()
 	router.SetTrustedProxies(nil)
 
 	router.GET("/health", func(c *gin.Context) {
