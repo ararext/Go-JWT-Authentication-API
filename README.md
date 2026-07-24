@@ -59,7 +59,7 @@ docs/
 - [x] bcrypt password hashing utilities, unit tested
 - [x] Request/response DTOs with `validator/v10` tags
 - [x] Centralized struct validation helper with readable error messages
-- [ ] JWT access/refresh token generation and validation
+- [x] JWT access/refresh token generation and validation, unit tested (round-trip, expiry, tampering, wrong secret)
 - [ ] Auth service (signup / login business logic)
 - [ ] HTTP handlers and routes (`/api/v1/auth/*`)
 - [ ] JWT middleware and protected routes
@@ -121,7 +121,10 @@ curl http://localhost:8080/health
 go test ./... -v
 ```
 
-Currently covers: password hashing (bcrypt round-trip, salting verification) and struct validation (valid input, weak password, invalid email).
+Currently covers:
+- Password hashing (bcrypt round-trip, salting verification)
+- Struct validation (valid input, weak password, invalid email)
+- JWT generation and validation (valid round-trip, expired tokens, malformed tokens, wrong signing secret, tampered signatures)
 
 ## Environment Variables
 
