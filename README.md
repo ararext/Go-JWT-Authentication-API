@@ -40,7 +40,7 @@ internal/
   models/            database-shape structs (never exposed via API)
   dto/               request/response shapes with validation tags
   repository/        UserRepository interface + MongoDB implementation
-  service/           business logic (in progress)
+  service/           business logic (Signup/Login implemented, unit tested)
   handler/           HTTP handlers (in progress)
   middleware/         JWT auth middleware (in progress)
   utils/             bcrypt hashing, JWT utils, validation helper
@@ -60,7 +60,7 @@ docs/
 - [x] Request/response DTOs with `validator/v10` tags
 - [x] Centralized struct validation helper with readable error messages
 - [x] JWT access/refresh token generation and validation, unit tested (round-trip, expiry, tampering, wrong secret)
-- [ ] Auth service (signup / login business logic)
+- [x] Auth service (signup / login business logic), unit tested against a mock repository (no real database needed)
 - [ ] HTTP handlers and routes (`/api/v1/auth/*`)
 - [ ] JWT middleware and protected routes
 - [ ] Rate limiting, CORS, secure headers, graceful shutdown
@@ -125,6 +125,7 @@ Currently covers:
 - Password hashing (bcrypt round-trip, salting verification)
 - Struct validation (valid input, weak password, invalid email)
 - JWT generation and validation (valid round-trip, expired tokens, malformed tokens, wrong signing secret, tampered signatures)
+- AuthService signup/login logic — tested against an in-memory mock repository, no real database required (successful signup, duplicate email rejection, successful login, wrong password, unknown user)
 
 ## Environment Variables
 
