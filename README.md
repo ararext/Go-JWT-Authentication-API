@@ -41,10 +41,10 @@ internal/
   dto/               request/response shapes with validation tags
   repository/        UserRepository interface + MongoDB implementation
   service/           business logic (Signup/Login implemented, unit tested)
-  handler/           HTTP handlers (in progress)
+  handler/           HTTP handlers (signup, login implemented)
   middleware/         JWT auth middleware (in progress)
-  utils/             bcrypt hashing, JWT utils, validation helper
-  routes/            route registration (in progress)
+  utils/             bcrypt hashing, JWT utils, validation helper, response helper
+  routes/            route registration (/api/v1/auth/*)
   logger/            zap logger initialization
 pkg/
 tests/
@@ -61,7 +61,7 @@ docs/
 - [x] Centralized struct validation helper with readable error messages
 - [x] JWT access/refresh token generation and validation, unit tested (round-trip, expiry, tampering, wrong secret)
 - [x] Auth service (signup / login business logic), unit tested against a mock repository (no real database needed)
-- [ ] HTTP handlers and routes (`/api/v1/auth/*`)
+- [x] HTTP handlers and routes (`/api/v1/auth/signup`, `/api/v1/auth/login`) — fully wired end-to-end against real MongoDB
 - [ ] JWT middleware and protected routes
 - [ ] Rate limiting, CORS, secure headers, graceful shutdown
 - [ ] Docker + docker-compose
@@ -113,6 +113,37 @@ go run cmd/server/main.go
 ```bash
 curl http://localhost:8080/health
 # {"status":"ok"}
+```
+
+## API Endpoints
+
+All routes are prefixed with `/api/v1`.
+
+| Method | Endpoint | Description | Auth required |
+|---|---|---|---|
+| POST | `/auth/signup` | Register a new user, returns access + refresh tokens | No |
+| POST | `/auth/login` | Authenticate, returns access + refresh tokens | No |
+
+**Example — Signup**
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Ararext","email":"ararext@example.com","password":"securepass123"}'
+```
+
+**Example — Login**
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"ararext@example.com","password":"securepass123"}'
+```
+
+All error responses follow a consistent shape:
+
+```json
+{ "success": false, "message": "invalid credentials" }
 ```
 
 ## Testing
