@@ -67,3 +67,32 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	utils.RespondSuccess(c, http.StatusOK, resp)
 }
+
+func (h *AuthHandler) Refresh(c *gin.Context) {
+	var req dto.RefreshRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if err := utils.ValidateStruct(req); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	resp, err := h.authService.RefreshToken(c.Request.Context(), req.RefreshToken)
+	if err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "invalid or expired refresh token")
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, resp)
+}
+
+func (h *AuthHandler) Logout(c *gin.Context) {
+	// Client-side logout: the client discards its tokens.
+	// TODO: once TokenBlacklist has a real (e.g. Redis) implementation,
+	// blacklist the access token here so it's rejected immediately even
+	// before it naturally expires.
+	utils.RespondSuccess(c, http.StatusOK, gin.H{"message": "logged out successfully"})
+}

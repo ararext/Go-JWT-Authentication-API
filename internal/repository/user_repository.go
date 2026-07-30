@@ -29,6 +29,10 @@ func NewUserRepository(db *mongo.Database) UserRepository {
 }
 
 func (r *mongoUserRepository) Create(ctx context.Context, user *models.User) error {
+	if user.ID.IsZero() {
+		user.ID = primitive.NewObjectID()
+	}
+
 	_, err := r.collection.InsertOne(ctx, user)
 	return err
 }

@@ -39,6 +39,7 @@ func main() {
 		cfg.RefreshTokenDuration,
 	)
 	authHandler := handler.NewAuthHandler(authService)
+	userHandler := handler.NewUserHandler(userRepo)
 
 	router := gin.Default()
 	router.SetTrustedProxies(nil)
@@ -47,7 +48,7 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	routes.RegisterRoutes(router, authHandler)
+	routes.RegisterRoutes(router, authHandler, userHandler, cfg.JWTSecret)
 
 	addr := ":" + cfg.Port
 	log.Info("server listening", zap.String("address", addr))

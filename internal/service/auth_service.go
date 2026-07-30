@@ -15,6 +15,7 @@ import (
 type AuthService interface {
 	Signup(ctx context.Context, req dto.SignupRequest) (*dto.AuthResponse, error)
 	Login(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponse, error)
+	RefreshToken(ctx context.Context, refreshToken string) (*dto.AuthResponse, error)
 }
 
 type authService struct {
@@ -109,4 +110,18 @@ func (s *authService) buildAuthResponse(user *models.User) (*dto.AuthResponse, e
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
+}
+
+func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*dto.AuthResponse, error) {
+	claims, err := utils.ValidateToken(refreshToken, s.jwtSecret)
+	if err != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	user, err := s.userRepo.FindByID(ctx, claims.UserID)
+	if err != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	return s.buildAuthResponse(user)
 }
