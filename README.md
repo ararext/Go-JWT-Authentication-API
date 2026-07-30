@@ -42,7 +42,7 @@ internal/
   repository/        UserRepository interface + MongoDB implementation
   service/           business logic (Signup/Login implemented, unit tested)
   handler/           HTTP handlers (signup, login implemented)
-  middleware/         JWT auth middleware (in progress)
+  middleware/         JWT auth middleware (implemented)
   utils/             bcrypt hashing, JWT utils, validation helper, response helper
   routes/            route registration (/api/v1/auth/*)
   logger/            zap logger initialization
@@ -62,7 +62,7 @@ docs/
 - [x] JWT access/refresh token generation and validation, unit tested (round-trip, expiry, tampering, wrong secret)
 - [x] Auth service (signup / login business logic), unit tested against a mock repository (no real database needed)
 - [x] HTTP handlers and routes (`/api/v1/auth/signup`, `/api/v1/auth/login`) — fully wired end-to-end against real MongoDB
-- [ ] JWT middleware and protected routes
+- [x] JWT middleware and protected routes (`/api/v1/users/me`, refresh, logout scaffold)
 - [ ] Rate limiting, CORS, secure headers, graceful shutdown
 - [ ] Docker + docker-compose
 - [ ] Swagger/OpenAPI docs
@@ -123,6 +123,9 @@ All routes are prefixed with `/api/v1`.
 |---|---|---|---|
 | POST | `/auth/signup` | Register a new user, returns access + refresh tokens | No |
 | POST | `/auth/login` | Authenticate, returns access + refresh tokens | No |
+| POST | `/auth/refresh` | Exchange a valid refresh token for a new access token | No (requires refresh token in body) |
+| POST | `/auth/logout` | Client-side logout (stateless for now — see Roadmap) | No |
+| GET | `/users/me` | Return the currently authenticated user | Yes (`Authorization: Bearer <accessToken>`) |
 
 **Example — Signup**
 
@@ -138,6 +141,13 @@ curl -X POST http://localhost:8080/api/v1/auth/signup \
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"ararext@example.com","password":"securepass123"}'
+```
+
+**Example — Accessing a protected route**
+
+```bash
+curl http://localhost:8080/api/v1/users/me \
+  -H "Authorization: Bearer <accessToken>"
 ```
 
 All error responses follow a consistent shape:
@@ -157,6 +167,7 @@ Currently covers:
 - Struct validation (valid input, weak password, invalid email)
 - JWT generation and validation (valid round-trip, expired tokens, malformed tokens, wrong signing secret, tampered signatures)
 - AuthService signup/login logic — tested against an in-memory mock repository, no real database required (successful signup, duplicate email rejection, successful login, wrong password, unknown user)
+- JWT middleware — protected route rejects missing and malformed tokens (`tests/` package, using `httptest`)
 
 ## Environment Variables
 
