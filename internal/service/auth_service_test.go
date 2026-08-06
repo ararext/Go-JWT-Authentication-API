@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/ararext/Go-JWT-Authentication-API/internal/dto"
+	"github.com/ararext/Go-JWT-Authentication-API/internal/repository/mock"
 	"github.com/stretchr/testify/assert"
 )
 
 func newTestAuthService() AuthService {
-	repo := newMockUserRepository()
+	repo := mock.NewUserRepository()
 	return NewAuthService(repo, "test-secret", 15*time.Minute, 7*24*time.Hour)
 }
 

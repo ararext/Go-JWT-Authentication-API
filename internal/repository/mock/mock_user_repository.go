@@ -1,4 +1,4 @@
-package service
+package mock
 
 import (
 	"context"
@@ -8,23 +8,27 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type mockUserRepository struct {
+// UserRepository is an in-memory implementation of repository.UserRepository,
+// used only in tests — never wired into the real application.
+type UserRepository struct {
 	usersByEmail map[string]*models.User
 }
 
-func newMockUserRepository() *mockUserRepository {
-	return &mockUserRepository{
+func NewUserRepository() *UserRepository {
+	return &UserRepository{
 		usersByEmail: make(map[string]*models.User),
 	}
 }
 
-func (m *mockUserRepository) Create(ctx context.Context, user *models.User) error {
-	user.ID = primitive.NewObjectID()
+func (m *UserRepository) Create(ctx context.Context, user *models.User) error {
+	if user.ID.IsZero() {
+		user.ID = primitive.NewObjectID()
+	}
 	m.usersByEmail[user.Email] = user
 	return nil
 }
 
-func (m *mockUserRepository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
+func (m *UserRepository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
 	user, ok := m.usersByEmail[email]
 	if !ok {
 		return nil, repository.ErrUserNotFound
@@ -32,7 +36,7 @@ func (m *mockUserRepository) FindByEmail(ctx context.Context, email string) (*mo
 	return user, nil
 }
 
-func (m *mockUserRepository) FindByID(ctx context.Context, id string) (*models.User, error) {
+func (m *UserRepository) FindByID(ctx context.Context, id string) (*models.User, error) {
 	for _, u := range m.usersByEmail {
 		if u.ID.Hex() == id {
 			return u, nil
