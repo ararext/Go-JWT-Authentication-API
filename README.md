@@ -2,7 +2,7 @@
 
 A production-style JWT authentication REST API built in Go, following Clean Architecture principles. This project is built incrementally with a focus on testability, security, and idiomatic Go — not a copy-paste tutorial.
 
-> **Status: In active development.** This README reflects progress through the foundational layers (config, database, security, validation). Auth endpoints, middleware, and Docker/CI are still being built.
+> **Status: Feature-complete.** Core JWT authentication, protected routes, security middleware, Docker, Swagger docs, CI, and a full test suite are all in place. See Roadmap below for planned extensions.
 
 ## Tech Stack
 
@@ -40,11 +40,11 @@ internal/
   models/            database-shape structs (never exposed via API)
   dto/               request/response shapes with validation tags
   repository/        UserRepository interface + MongoDB implementation
-  service/           business logic (Signup/Login implemented, unit tested)
-  handler/           HTTP handlers (signup, login implemented)
-  middleware/         JWT auth middleware (implemented)
+  service/           business logic — Signup, Login, RefreshToken, unit tested
+  handler/           HTTP handlers — auth (signup/login/refresh/logout) and users/me
+  middleware/         JWT auth, CORS, secure headers, rate limiting
   utils/             bcrypt hashing, JWT utils, validation helper, response helper
-  routes/            route registration (/api/v1/auth/*)
+  routes/            route registration (/api/v1/auth/*, /api/v1/users/*)
   logger/            zap logger initialization
 pkg/
 tests/
@@ -67,7 +67,7 @@ docs/
 - [x] Docker + docker-compose (one-command startup: `docker compose up --build`)
 - [x] Swagger/OpenAPI docs (interactive UI at `/swagger/index.html`)
 - [x] GitHub Actions CI (build, test, lint on every push)
-- [ ] Postman collection
+- [x] Postman collection (`docs/postman_collection.json`, with automatic token capture)
 
 ## Setup
 
@@ -133,6 +133,8 @@ Interactive Swagger UI, with every endpoint documented and testable in-browser:
 http://localhost:8080/swagger/index.html
 ```
 
+![Swagger UI](docs/screenshots/swagger-ui.png)
+
 ## API Endpoints
 
 All routes are prefixed with `/api/v1`.
@@ -173,6 +175,14 @@ All error responses follow a consistent shape:
 ```json
 { "success": false, "message": "invalid credentials" }
 ```
+
+![Sample API response](docs/screenshots/api-response.png)
+
+### Postman Collection
+
+A ready-to-import collection covering every endpoint lives at [`docs/postman_collection.json`](docs/postman_collection.json). It automatically captures the access/refresh tokens from Signup, Login, and Refresh responses into collection variables, so "Get Current User" works immediately afterward with no manual copy-pasting.
+
+**Import → File → `docs/postman_collection.json`**
 
 ## Testing
 
@@ -219,8 +229,8 @@ Every push and pull request to `main` triggers a GitHub Actions workflow that bu
 
 ## Roadmap
 
-Once the core auth API is complete, planned extensions include: email verification (OTP), password reset, role-based access control, refresh token rotation, Redis-based token blacklist, request rate limiting, Prometheus metrics, and CI/CD.
+With the core auth API complete, planned extensions include: email verification (OTP), password reset, role-based access control (admin/user), refresh token rotation, a Redis-backed token blacklist (the `TokenBlacklist` interface already exists in `internal/service`, unimplemented), Prometheus metrics, and optional Kubernetes deployment manifests.
 
 ## License
 
-Not yet decided.
+MIT — see [LICENSE](LICENSE).
