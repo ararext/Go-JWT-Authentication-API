@@ -8,7 +8,7 @@ A production-style JWT authentication REST API built in Go, following Clean Arch
 
 | Concern | Choice |
 |---|---|
-| Language | Go 1.24+ |
+| Language | Go 1.25+ |
 | Web framework | [Gin](https://github.com/gin-gonic/gin) |
 | Database | MongoDB |
 | Auth | JWT (access + refresh tokens) |
@@ -63,33 +63,43 @@ docs/
 - [x] Auth service (signup / login business logic), unit tested against a mock repository (no real database needed)
 - [x] HTTP handlers and routes (`/api/v1/auth/signup`, `/api/v1/auth/login`) — fully wired end-to-end against real MongoDB
 - [x] JWT middleware and protected routes (`/api/v1/users/me`, refresh, logout scaffold)
-- [ ] Rate limiting, CORS, secure headers, graceful shutdown
-- [ ] Docker + docker-compose
-- [ ] Swagger/OpenAPI docs
-- [ ] GitHub Actions CI
+- [x] Rate limiting, CORS, secure headers, graceful shutdown
+- [x] Docker + docker-compose (one-command startup: `docker compose up --build`)
+- [x] Swagger/OpenAPI docs (interactive UI at `/swagger/index.html`)
+- [x] GitHub Actions CI (build, test, lint on every push)
 - [ ] Postman collection
 
-## Setup (current state)
+## Setup
 
 ### Prerequisites
-- Go 1.24+
-- Docker (for running MongoDB locally)
+- Go 1.25+
+- Docker (for running MongoDB locally, or the full stack via docker-compose)
 
-### 1. Clone and install dependencies
+### Option 1: Run everything with Docker Compose (recommended)
+
+```bash
+git clone https://github.com/ararext/Go-JWT-Authentication-API.git
+cd Go-JWT-Authentication-API
+export JWT_SECRET=your-real-random-secret
+docker compose up --build
+```
+
+This starts both the API and MongoDB together. Verify:
+
+```bash
+curl http://localhost:8080/health
+# {"status":"ok"}
+```
+
+### Option 2: Run the API locally, MongoDB in Docker
 
 ```bash
 git clone https://github.com/ararext/Go-JWT-Authentication-API.git
 cd Go-JWT-Authentication-API
 go mod tidy
-```
 
-### 2. Start MongoDB
-
-```bash
 docker run -d --name mongo-dev --restart unless-stopped -p 27017:27017 mongo:7
 ```
-
-### 3. Configure environment
 
 Create a `.env` file in the project root:
 
@@ -102,17 +112,25 @@ ACCESS_TOKEN_DURATION=15m
 REFRESH_TOKEN_DURATION=168h
 ```
 
-### 4. Run the server
+Run:
 
 ```bash
 go run cmd/server/main.go
 ```
 
-### 5. Verify
+Verify:
 
 ```bash
 curl http://localhost:8080/health
 # {"status":"ok"}
+```
+
+## API Documentation
+
+Interactive Swagger UI, with every endpoint documented and testable in-browser:
+
+```
+http://localhost:8080/swagger/index.html
 ```
 
 ## API Endpoints
@@ -159,10 +177,13 @@ All error responses follow a consistent shape:
 ## Testing
 
 ```bash
-go test ./... -v
+make test
+# or: go test ./... -v -cover
 ```
 
-Currently covers:
+Current coverage: `internal/utils` 80.6%, `internal/service` 63.9%, plus a full HTTP-layer integration suite in `tests/` covering signup, login, and protected-route access (via `httptest` and an in-memory mock repository — no real database required).
+
+Coverage currently covers:
 - Password hashing (bcrypt round-trip, salting verification)
 - Struct validation (valid input, weak password, invalid email)
 - JWT generation and validation (valid round-trip, expired tokens, malformed tokens, wrong signing secret, tampered signatures)
@@ -179,6 +200,22 @@ Currently covers:
 | `JWT_SECRET` | Secret used to sign JWTs — never commit a real value | — |
 | `ACCESS_TOKEN_DURATION` | Access token lifetime | `15m` |
 | `REFRESH_TOKEN_DURATION` | Refresh token lifetime | `168h` |
+
+## Makefile Commands
+
+| Command | Description |
+|---|---|
+| `make run` | Run the server locally |
+| `make test` | Run all tests with coverage |
+| `make fmt` | Format code with `gofmt` |
+| `make lint` | Run `golangci-lint` |
+| `make swagger` | Regenerate Swagger docs |
+| `make docker` | Build and run the full stack via Docker Compose |
+| `make clean` | Remove generated docs and build artifacts |
+
+## CI
+
+Every push and pull request to `main` triggers a GitHub Actions workflow that builds the project, runs the full test suite, and lints the code. See `.github/workflows/ci.yml`.
 
 ## Roadmap
 
