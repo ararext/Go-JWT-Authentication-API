@@ -1,3 +1,12 @@
+// @title           Go JWT Authentication API
+// @version         1.0
+// @description     A production-style JWT authentication REST API built with Clean Architecture.
+// @host            localhost:8080
+// @BasePath        /
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and your access token.
 package main
 
 import (
@@ -8,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/ararext/Go-JWT-Authentication-API/docs"
 	"github.com/ararext/Go-JWT-Authentication-API/internal/config"
 	"github.com/ararext/Go-JWT-Authentication-API/internal/database"
 	"github.com/ararext/Go-JWT-Authentication-API/internal/handler"
@@ -17,6 +27,8 @@ import (
 	"github.com/ararext/Go-JWT-Authentication-API/internal/routes"
 	"github.com/ararext/Go-JWT-Authentication-API/internal/service"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
 )
 
@@ -24,7 +36,7 @@ func main() {
 	cfg := config.Load()
 
 	log := logger.New()
-	defer log.Sync()
+	defer func() { _ = log.Sync() }()
 
 	log.Info("starting server",
 		zap.String("port", cfg.Port),
@@ -48,7 +60,9 @@ func main() {
 	userHandler := handler.NewUserHandler(userRepo)
 
 	router := gin.Default()
-	router.SetTrustedProxies(nil)
+	if err := router.SetTrustedProxies(nil); err != nil {
+		log.Fatal("failed to set trusted proxies", zap.Error(err))
+	}
 
 	// Security middleware — order matters: CORS/headers first, then rate limiting,
 	// so even rejected requests get consistent headers.
@@ -59,6 +73,9 @@ func main() {
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
+
+	docs.SwaggerInfo.Host = "localhost:" + cfg.Port
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	routes.RegisterRoutes(router, authHandler, userHandler, cfg.JWTSecret)
 

@@ -43,7 +43,9 @@ func setupTestRouter() *gin.Engine {
 func doJSONRequest(router *gin.Engine, method, path string, body interface{}) *httptest.ResponseRecorder {
 	var reqBody bytes.Buffer
 	if body != nil {
-		json.NewEncoder(&reqBody).Encode(body)
+		if err := json.NewEncoder(&reqBody).Encode(body); err != nil {
+			panic(err) // test helper — encoding failure means the test itself is broken
+		}
 	}
 
 	req := httptest.NewRequest(method, path, &reqBody)
@@ -189,7 +191,9 @@ func TestProtectedRoute_ValidToken_Returns200(t *testing.T) {
 			AccessToken string `json:"accessToken"`
 		} `json:"data"`
 	}
-	json.Unmarshal(w.Body.Bytes(), &signupResp)
+	if err := json.Unmarshal(w.Body.Bytes(), &signupResp); err != nil {
+		t.Fatalf("failed to unmarshal signup response: %v", err)
+	}
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/me", nil)
 	req.Header.Set("Authorization", "Bearer "+signupResp.Data.AccessToken)

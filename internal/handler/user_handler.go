@@ -19,6 +19,16 @@ func NewUserHandler(userRepo repository.UserRepository) *UserHandler {
 	return &UserHandler{userRepo: userRepo}
 }
 
+// Me godoc
+// @Summary      Get current user
+// @Description  Returns the currently authenticated user's profile
+// @Tags         users
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  dto.UserResponse
+// @Failure      401  {object}  map[string]interface{}
+// @Failure      404  {object}  map[string]interface{}
+// @Router       /api/v1/users/me [get]
 func (h *UserHandler) Me(c *gin.Context) {
 	claims, err := middleware.GetUserClaims(c)
 	if err != nil {
